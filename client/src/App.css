@@ -1,0 +1,19 @@
+
+
+.tornasol-background {
+    background: linear-gradient(135deg, #4A90E2, #8439B7);
+    background-size: 200% 200%;
+    animation: tornasol 6s ease infinite;
+  }
+
+
+.alumno-image {
+    max-width: 100%;
+    height: 100px;
+    padding: 10px; /* La altura que desees */
+}
+.center-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
