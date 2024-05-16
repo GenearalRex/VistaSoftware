@@ -18,10 +18,9 @@ export function TasksFormPages() {
     setValue,
   } = useForm();
 
-  const is_login = JSON.parse(localStorage.getItem("is_login"));
   const navigate = useNavigate();
   const params = useParams();
-
+  const is_login = JSON.parse(localStorage.getItem("is_login"));
   useEffect(() => {
     async function loadTasks() {
       if (params.id) {
@@ -93,37 +92,43 @@ export function TasksFormPages() {
           className="bg-zinc-200 p-3 rounded-lg block w-full mb-3"
         />
         {errors.title && <span>Este campo es requerido</span>}
+        {is_login ? (
+          <>
+            {" "}
+            <label
+              htmlFor="fileUpload"
+              className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
+            >
+              Subir Imagen
+              <input
+                type="file"
+                id="fileUpload"
+                style={{ display: "none" }}
+                {...register("file")}
+              />
+            </label>
+            <label
+              htmlFor="videoUpload"
+              className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
+            >
+              Subir Video
+              <input
+                type="file"
+                id="videoUpload"
+                style={{ display: "none" }}
+                {...register("video")}
+              />
+            </label>
+            <button className="bg-green-500 p-3 rounded-lg block w-full mt-3">
+              Guardar
+            </button>
+          </>
+        ) : (
+          <></>
+        )}
       </form>
       {is_login ? (
         <>
-          {" "}
-          <label
-            htmlFor="fileUpload"
-            className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
-          >
-            Subir Imagen
-            <input
-              type="file"
-              id="fileUpload"
-              style={{ display: "none" }}
-              {...register("file")}
-            />
-          </label>
-          <label
-            htmlFor="videoUpload"
-            className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
-          >
-            Subir Video
-            <input
-              type="file"
-              id="videoUpload"
-              style={{ display: "none" }}
-              {...register("video")}
-            />
-          </label>
-          <button className="bg-green-500 p-3 rounded-lg block w-full mt-3">
-            Guardar
-          </button>
           {params.id && (
             <button
               className="bg-red-500 p-3 rounded-lg w-48 mt-3"

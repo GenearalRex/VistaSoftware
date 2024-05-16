@@ -13,6 +13,7 @@ export function TasksCard({ tasks }) {
       >
         <h1 className="font-bold uppercase">{tasks.title}</h1>
         <p className="text-slate-900">{tasks.description}</p>
+      
 
 
 

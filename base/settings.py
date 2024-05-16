@@ -35,7 +35,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "jazzmin",
+    #"jazzmin",
+    "flask_admin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -160,8 +161,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # autorizacion corsz
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost:3001",
+   # "http://localhost:3000",
+  #  "http://localhost:3001",
 ]
 
 
