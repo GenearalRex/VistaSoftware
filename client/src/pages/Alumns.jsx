@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 
-//importar imagenes
+// Importar imágenes
 import imagen1 from "./Imagenes/logo uptap hd.jpg";
 import imagen2 from "./Imagenes/logo IS hd.jpg";
 import imagen3 from "./Imagenes/5 sin título_20231014160106.png";
@@ -34,17 +34,18 @@ export function Alumns() {
   const carouselOptions = {
     infiniteLoop: true, // Carrusel infinito
     autoPlay: true, // Reproducción automática
-    interval: 2000, // Intervalo en milisegundos (5 segundos)
+    interval: 2000,
   };
-  const [tasks, setTasks] = useState([]);
-    useEffect(()=>{
-        async function loadtasks(){
-            const res = await getAllTasks()
-            setTasks(res.data);
-        }
-        loadtasks();
 
-    },[]);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    async function loadTasks() {
+      const res = await getAllTasks({ checkbox: "global" });
+      setTasks(res.data);
+    }
+    loadTasks();
+  }, []);
 
   return (
     <div>
@@ -57,13 +58,21 @@ export function Alumns() {
             </div>
           ))}
         </Carousel>
-
-        <div className="grid grid-cols-3 gap-2">
-          {tasks.map((tasks) => (
-            <TasksCard key={tasks.id} tasks={tasks} />
-          ))}
-        </div>
       </center>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: "10px", // Ajusta este valor según el espacio que desees
+          width: "100%",
+        }}
+      >
+        {tasks.map((task) => (
+          <TasksCard key={task.id} tasks={task} />
+        ))}
+      </div>
     </div>
   );
 }

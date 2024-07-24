@@ -3,7 +3,6 @@ from .controller.TascksController import *
 
 router = DefaultRouter()
 
+
 router.register(r"", TaskController, basename="task")
-
-
 urlpatterns = router.urls

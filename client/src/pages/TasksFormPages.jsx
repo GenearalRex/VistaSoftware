@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   createTask,
@@ -8,7 +8,15 @@ import {
 } from "../api/Tasks.api";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { GitHub } from "@mui/icons-material";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import InputLabel from "@mui/material/InputLabel";
+import FormControl from "@mui/material/FormControl";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import "./Css/TasksFormPages.css";
 
 export function TasksFormPages() {
   const {
@@ -16,155 +24,281 @@ export function TasksFormPages() {
     handleSubmit,
     formState: { errors },
     setValue,
+    reset,
   } = useForm();
-
   const navigate = useNavigate();
   const params = useParams();
-  const is_login = JSON.parse(localStorage.getItem("is_login"));
+  const MySwal = withReactContent(Swal);
+
+  const [imageFileName, setImageFileName] = useState("Subir Imagen");
+  const [videoFileName, setVideoFileName] = useState("Subir Video");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [fileVideo, setFileVideo] = useState(null);
+  const [checkbox, setCheckbox] = useState("");
+  const [fileImage, setFileImage] = useState(null);
+
   useEffect(() => {
     async function loadTasks() {
       if (params.id) {
         const {
-          data: { title, description, git, archivo, video },
+          data: { title, description, git, archivo, video, checkbox },
         } = await getTasks(params.id);
         setValue("title", title);
         setValue("description", description);
         setValue("git", git);
+        setValue("checkbox", checkbox);
+        setCheckbox(checkbox);
 
-        // Cargar imágenes y videos al editar
-        const imgElement = document.querySelector("#imagenPreview");
-        const videoElement = document.querySelector("#videoPreview");
-
-        if (imgElement) {
-          imgElement.src = archivo; // Ruta de la imagen
+        if (archivo) {
+          const response = await fetch(archivo);
+          const blob = await response.blob();
+          const file = new File([blob], "imagen", { type: blob.type });
+          setFileImage(file);
+          setImageFileName("Imagen seleccionada");
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result);
+          };
+          reader.readAsDataURL(file);
         }
-
-        if (videoElement) {
-          const sourceElement = videoElement.querySelector("source");
-          sourceElement.src = video; // Ruta del video
-          videoElement.load(); // Carga la nueva fuente de video
+        if (video) {
+          const response = await fetch(video);
+          const blob = await response.blob();
+          const file = new File([blob], "video", { type: blob.type });
+          setFileVideo(file);
+          setVideoFileName("Video seleccionado");
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setVideoPreview(reader.result);
+          };
+          reader.readAsDataURL(file);
         }
+      } else {
+        reset({
+          title: "",
+          description: "",
+          git: "",
+          checkbox: "",
+        });
+        setImageFileName("Subir Imagen");
+        setVideoFileName("Subir Video");
+        setImagePreview(null);
+        setVideoPreview(null);
+        setFileImage(null);
+        setFileVideo(null);
+        setCheckbox("");
       }
     }
     loadTasks();
-  }, [params.id, setValue]);
+  }, [params.id, setValue, reset]);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    setFileImage(file);
+    if (file) {
+      setImageFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleVideoUpload = (e) => {
+    const file = e.target.files[0];
+    setFileVideo(file);
+    if (file) {
+      setVideoFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const onSubmit = handleSubmit(async (data) => {
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("description", data.description);
     formData.append("git", data.git);
-    formData.append("video", data.video[0]);
-    formData.append("archivo", data.file[0]);
+    formData.append("video", fileVideo);
+    formData.append("archivo", fileImage);
+    formData.append("checkbox", data.checkbox);
 
     if (params.id) {
       await updateTasks(params.id, formData);
       toast.success("Se ha modificado un proyecto");
+      navigate("/tasks");
     } else {
       await createTask(formData);
       toast.success("Usted ha creado un nuevo proyecto");
+      navigate("/tasks");
     }
-
-    navigate("/tasks");
   });
 
+  const options = [
+    { key: "integradores", value: "Integradores" },
+    { key: "moviles", value: "Móviles" },
+    //{ key: "global", value: "Global" },
+    { key: "webs", value: "Webs" },
+    //{ key: "proyectos", value: "Proyectos" },
+  ];
+
+  const handleDelete = async () => {
+    const result = await MySwal.fire({
+      title: "¿Estás seguro?",
+      text: "¡No podrás revertir esto!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, elimínalo!",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      await deleteTasks(params.id);
+      toast.success("Usted ha eliminado un campo");
+      navigate("/tasks");
+    }
+  };
+
   return (
-    <div className="max-w-xl mx-auto mt-8" style={{}}>
-      <form onSubmit={onSubmit}>
-        <input
-          type="text"
-          placeholder="Titulo"
+    <div className="form-container">
+      <form
+        onSubmit={onSubmit}
+        className="form-content"
+        encType="multipart/form-data"
+      >
+        <TextField
+          label="Título"
+          variant="outlined"
+          fullWidth
+          margin="normal"
           {...register("title", { required: true })}
-          className="bg-zinc-200 p-3 rounded-lg block w-full mb-3"
+          error={!!errors.title}
+          helperText={errors.title ? "Este campo es requerido" : ""}
+          InputLabelProps={{ shrink: true }}
         />
-        {errors.title && <span>Este campo es requerido</span>}
-        <textarea
-          rows="3"
-          placeholder="Descripcion"
+        <TextField
+          label="Descripción"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          multiline
+          rows={4}
           {...register("description", { required: true })}
-          className="bg-zinc-200 p-3 rounded-lg block w-full mb-3"
-        ></textarea>
-        {errors.description && <span>Este campo es requerido</span>}
-        <input
-          type="link"
-          placeholder="GitHub"
-          {...register("git", { required: true })}
-          className="bg-zinc-200 p-3 rounded-lg block w-full mb-3"
+          error={!!errors.description}
+          helperText={errors.description ? "Este campo es requerido" : ""}
+          InputLabelProps={{ shrink: true }}
         />
-        {errors.title && <span>Este campo es requerido</span>}
-        {is_login ? (
-          <>
-            {" "}
-            <label
-              htmlFor="fileUpload"
-              className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
+        <TextField
+          label="GitHub"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          {...register("git", { required: true })}
+          error={!!errors.git}
+          helperText={errors.git ? "Este campo es requerido" : ""}
+          InputLabelProps={{ shrink: true }}
+        />
+        <div className="mb-5 mt-5">
+          <Button
+            variant="contained"
+            component="label"
+            fullWidth
+            className="upload-button"
+            color="primary"
+          >
+            {imageFileName}
+            <input
+              type="file"
+              hidden
+              accept="image/*"
+              {...register("file")}
+              onChange={handleImageUpload}
+            />
+          </Button>
+        </div>
+        <div>
+          <Button
+            variant="contained"
+            component="label"
+            fullWidth
+            className="upload-button"
+            color="primary"
+          >
+            {videoFileName}
+            <input
+              type="file"
+              hidden
+              accept="video/*"
+              {...register("video")}
+              onChange={handleVideoUpload}
+            />
+          </Button>
+        </div>
+
+        <FormControl fullWidth margin="normal">
+          <InputLabel shrink={true}>Categoría</InputLabel>
+          <Select
+            value={checkbox}
+            label="Categoría"
+            {...register("checkbox", { required: true })}
+            onChange={(e) => setCheckbox(e.target.value)}
+            error={!!errors.checkbox}
+          >
+            {options.map((option) => (
+              <MenuItem key={option.key} value={option.key}>
+                {option.value}
+              </MenuItem>
+            ))}
+          </Select>
+          {errors.checkbox && <span>Este campo es requerido</span>}
+        </FormControl>
+        <div className="preview-container">
+          {imagePreview && (
+            <img
+              id="imagenPreview"
+              src={imagePreview}
+              alt="Vista previa de la imagen"
+              className="image-preview"
+            />
+          )}
+          {videoPreview && (
+            <video controls id="videoPreview" className="video-preview">
+              <source src={videoPreview} type="video/mp4" />
+            </video>
+          )}
+        </div>
+        <div className="buttons-container">
+          <div className="mb-5 mt-5">
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              className="save-button"
+              color="success"
             >
-              Subir Imagen
-              <input
-                type="file"
-                id="fileUpload"
-                style={{ display: "none" }}
-                {...register("file")}
-              />
-            </label>
-            <label
-              htmlFor="videoUpload"
-              className="bg-blue-500 p-3 rounded-lg block w-full mt-3 cursor-pointer text-white"
-            >
-              Subir Video
-              <input
-                type="file"
-                id="videoUpload"
-                style={{ display: "none" }}
-                {...register("video")}
-              />
-            </label>
-            <button className="bg-green-500 p-3 rounded-lg block w-full mt-3">
               Guardar
-            </button>
-          </>
-        ) : (
-          <></>
-        )}
-      </form>
-      {is_login ? (
-        <>
+            </Button>
+          </div>
           {params.id && (
-            <button
-              className="bg-red-500 p-3 rounded-lg w-48 mt-3"
-              onClick={async function () {
-                const acceptado = window.confirm(
-                  "¿Seguro que quieres eliminar este campo?"
-                );
-                if (acceptado) {
-                  await deleteTasks(params.id);
-                  toast.success("Usted ha eliminado un campo");
-                  navigate("/tasks");
-                }
-              }}
+            <Button
+              variant="contained"
+              fullWidth
+              className="delete-button"
+              color="error"
+              onClick={handleDelete}
             >
               Eliminar
-            </button>
+            </Button>
           )}
-        </>
-      ) : (
-        <></>
-      )}
-
-      <center>
-        <img
-          id="imagenPreview"
-          alt="Vista previa de la imagen"
-          style={{ width: "200px", height: "200px" }}
-        />
-      </center>
-      <video
-        controls
-        id="videoPreview"
-        style={{ width: "800px", height: "300px" }}
-      >
-        <source type="video/mp4" />
-      </video>
+        </div>
+      </form>
     </div>
   );
 }

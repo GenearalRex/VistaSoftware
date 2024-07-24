@@ -1,1 +1,1 @@
-from .UserController import UserController
+from .User import UserController

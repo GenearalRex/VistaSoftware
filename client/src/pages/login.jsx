@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
-
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -15,36 +14,43 @@ import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "./AuthContext"; // Importa el contexto de autenticación
+import "./IndexCss.css"; // Importa tu archivo CSS personalizado
+import imagen2 from "./Imagenes/logo IS hd.jpg"; // Importa la imagen
 
 function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { signIn } = useContext(AuthContext); // Usa el contexto de autenticación
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/users/authenticate/",
-        {
-          username: email,
-          password: password,
-        }
-      );
-      localStorage.setItem(
-        "is_login",
-        JSON.stringify({
-          access: response?.access,
-          username: response?.usernmae,
-          refrech: response?.refrech,
-        })
-      );
-     // navigate("/tasks-create");
-      // console.log(response?.data);
+      const response = await axios.post("http://localhost:8000/users/login/", {
+        username: email,
+        password: password,
+      });
+
+      signIn({
+        access: response.data.access,
+        username: response.data.username,
+        refresh: response.data.refresh,
+        roles: response.data.roles, // Guarda los roles del usuario
+      });
+
+      // Redirige al usuario basado en su rol
+      if (response.data.roles.includes("ALUMNOS")) {
+        navigate("/Alumns", { replace: true });
+      } else if (response.data.roles.includes("DOCENTES")) {
+        navigate("/tasks-create", { replace: true });
+      } else {
+        setError("Rol no reconocido");
+      }
     } catch (error) {
-      setError(error?.response?.data?.error);
+      setError(error.response?.data?.error || "Error de autenticación");
     }
   };
 
@@ -53,15 +59,23 @@ function SignIn() {
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Box
+          className="signin-box"
           sx={{
             marginTop: 8,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
+            backgroundColor: "white",
+            padding: 3,
+            borderRadius: 2,
+            boxShadow: 3,
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-            <LockOutlinedIcon />
+          <Avatar
+            sx={{ m: 1, width: 200, height: 200, bgcolor: "secondary.main" }}
+            src={imagen2}
+          >
+            {/* <LockOutlinedIcon /> Puedes eliminar este icono si no lo necesitas */}
           </Avatar>
           <Typography component="h1" variant="h5">
             Inicia Sesión
@@ -115,7 +129,12 @@ function SignIn() {
             <Grid container>
               <Grid item xs>
                 <Link href="#" variant="body2">
-                  Olvidaste tu contraseña?
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </Grid>
+              <Grid item>
+                <Link href="#" variant="body2">
+                  {"¿No tienes una cuenta? Regístrate"}
                 </Link>
               </Grid>
             </Grid>

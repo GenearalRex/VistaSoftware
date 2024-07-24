@@ -17,11 +17,11 @@ class GenericViewSet(Generic):
     def get_queryset(self):
         return self.model.objects.all().order_by(*self.order_by)
 
-    def get_object(self, pk) -> model:
+    def get_object(self, pk):
         return get_object_or_404(self.model, pk=pk)
 
-    def get_context_data(self, **kwars):
-        context = super().get_context_data(**kwars)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         context["filter"] = self.filterset_class(
             self.request.GET,
             queryset=self.get_queryset(),
@@ -34,5 +34,9 @@ class Select(GenericViewSet):
     def select(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
-        serializer = self.get_serializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
